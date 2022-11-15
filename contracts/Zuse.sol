@@ -80,8 +80,8 @@ abstract contract ERC20 is ERC20Basic {
 
 contract StandardToken is ERC20, BasicToken {
     using SafeMath for uint256;
+    
     uint private constant MAX_UINT = 2**256 - 1;
-
     mapping (address => mapping (address => uint256)) internal allowed;
 
     function burnFrom(address _owner, uint256 _value) public returns (bool) {

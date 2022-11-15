@@ -1,13 +1,21 @@
 import { ethers } from "hardhat";
 
-
 async function main() {
   const Zuse = await ethers.getContractFactory('ZUSE')
   const zuse = await Zuse.deploy()
 
   const supply = await zuse.totalSupply()
-  const balance = await zuse.balanceOf(snek.address)
+  const balance = await zuse.balanceOf(zuse.address)
   
+  /* address, resolvedAddress, deployTransaction, interface, provider, signer - methods on contract*/
+
+  /* ABI - callable functions (called via transaction on eth) */
+
+  /* zuse.address */
+  /*const test = await ethers.Contract('ZUSE')
+  console.log(test)
+  */
+
   await zuse.burn(1000)
 
   const sender = await zuse.getSender()
