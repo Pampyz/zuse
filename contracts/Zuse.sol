@@ -1,13 +1,5 @@
 pragma solidity 0.8.17;
 
-abstract contract ERC20Basic {
-    function totalSupply() public virtual view returns (uint256);
-    function balanceOf(address who) public virtual view returns (uint256);
-    function transfer(address to, uint256 value) public virtual returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Burn(address indexed burner, uint256 value);
-}
-
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0) {
@@ -32,11 +24,27 @@ library SafeMath {
     }
 }
 
-contract BasicToken is ERC20Basic {
+abstract contract IERC20 {
+    function totalSupply() public virtual view returns (uint256);
+    function balanceOf(address who) public virtual view returns (uint256);
+    function transfer(address to, uint256 value) public virtual returns (bool);
+    function allowance(address owner, address spender) public virtual view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public virtual returns (bool);
+    function approve(address spender, uint256 value) public virtual returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Burn(address indexed burner, uint256 value);
+}
+
+contract ERC20 is IERC20 {
     using SafeMath for uint256;
     mapping(address => uint256) balances;
+    mapping (address => mapping (address => uint256)) internal allowed;
+
     uint256 totalSupply_;
     uint256 burnedTotalNum_;
+    uint private constant MAX_UINT = 2**256 - 1;
+
 
     function totalSupply() public override view returns (uint256) {
         return totalSupply_;
@@ -55,6 +63,7 @@ contract BasicToken is ERC20Basic {
         emit Transfer(msg.sender, _to, _value);
         return true;
     }
+
     function burn(uint256 _value) public returns (bool) {
         require(_value <= balances[msg.sender]);
 
@@ -69,20 +78,6 @@ contract BasicToken is ERC20Basic {
     function totalBurned() public view returns (uint256) {
         return burnedTotalNum_;
     }
-}
-
-abstract contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public virtual view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public virtual returns (bool);
-    function approve(address spender, uint256 value) public virtual returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract StandardToken is ERC20, BasicToken {
-    using SafeMath for uint256;
-    
-    uint private constant MAX_UINT = 2**256 - 1;
-    mapping (address => mapping (address => uint256)) internal allowed;
 
     function burnFrom(address _owner, uint256 _value) public returns (bool) {
         require(_owner != address(0));
@@ -145,20 +140,48 @@ contract StandardToken is ERC20, BasicToken {
     }
 }
 
-contract ZUSE is StandardToken {
+abstract contract Withdrawable {
+    function withdraw(address payable to, uint256 quantity) public virtual returns (bool);
+}
+
+abstract contract Redeemable {
+    function sell(address payable to, uint256 quantity) public virtual returns (bool);
+    function buy() public payable virtual returns (bool);
+}
+
+
+contract ZUSE is ERC20, Withdrawable, Redeemable {
     using SafeMath for uint256;
 
     string     public name = "Zuse";
     string     public symbol = "ZUSE";
     uint8      public decimals = 18;
+    uint16      public ask = 10000; /* 10^5 tokens/wei gives ~$123 mil mkt cap using 1 ETH = $1000 */
+    uint16      public bid = 9000; /* 0.9*10^5 tokens/wei gives ~$12.3 mil diff */
+    address     public owner;
+    bool        public fellback = false;
 
     constructor() public {
         totalSupply_ = 1230123012301230123012301230;
         balances[msg.sender] = totalSupply_;
+        owner = msg.sender;
     }
 
-    function getSender() public view returns (address) {
-        return msg.sender;
+    // These functions concern obtaining & selling tokens
+    function withdraw(address payable to, uint256 quantity) public override returns (bool) {
+        require(msg.sender==owner);
+        to.transfer(quantity);
+    }
+
+    function sell(address payable to, uint256 quantity) public override returns (bool) {
+        balances[msg.sender].sub(quantity);
+        to.transfer(quantity);
+    }
+
+    function buy() public payable override returns (bool) {
+        balances[msg.sender] = balances[msg.sender].add(msg.value.mul(ask));
+        balances[msg.sender].add(100000);
+        balances[owner].sub(100000);
     }
 
     function batchTransfer(address[] calldata accounts, uint256[] calldata amounts)
@@ -172,8 +195,22 @@ contract ZUSE is StandardToken {
         return true;
     }
 
-    fallback() external {
-        revert();
+    // Debug functions to be removed
+    function getSender() public view returns (address) {
+        return msg.sender;
     }
 
+    function getFellback() public view returns (bool) {
+        return fellback;
+    }
+
+    receive() payable external {
+        fellback = true;
+        //revert();
+    }
+
+    fallback() payable external {
+        fellback = true;
+        //revert();
+    }
 }
