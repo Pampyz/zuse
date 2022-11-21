@@ -149,6 +149,9 @@ abstract contract Redeemable {
     function buy() public payable virtual returns (bool);
 }
 
+contract CalculatingToken is ERC20 {}
+contract StorageToken is ERC20{}
+contract L2Token is ERC20{}
 
 contract ZUSE is ERC20, Withdrawable, Redeemable {
     using SafeMath for uint256;
@@ -180,8 +183,6 @@ contract ZUSE is ERC20, Withdrawable, Redeemable {
 
     function buy() public payable override returns (bool) {
         balances[msg.sender] = balances[msg.sender].add(msg.value.mul(ask));
-        balances[msg.sender].add(100000);
-        balances[owner].sub(100000);
     }
 
     function batchTransfer(address[] calldata accounts, uint256[] calldata amounts)
@@ -192,6 +193,21 @@ contract ZUSE is ERC20, Withdrawable, Redeemable {
         for (uint i = 0; i < accounts.length; i++) {
             require(transfer(accounts[i], amounts[i]), "transfer failed");
         }
+        return true;
+    }
+    // NP solvers
+    function askSolve() public view returns (bool) {
+        
+        return true;
+    }
+
+
+    // Storage functions
+    function provideStorage() public view returns (bool) {
+        return true;
+    }
+
+    function askStorage() public view returns (bool) {
         return true;
     }
 
