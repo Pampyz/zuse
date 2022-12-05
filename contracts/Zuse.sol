@@ -140,20 +140,12 @@ contract ERC20 is IERC20 {
     }
 }
 
-abstract contract Withdrawable {
-    function withdraw(address payable to, uint256 quantity) public virtual returns (bool);
-}
-
-abstract contract Redeemable {
-    function sell(address payable to, uint256 quantity) public virtual returns (bool);
-    function buy() public payable virtual returns (bool);
-}
 
 contract CalculatingToken is ERC20 {}
 contract StorageToken is ERC20{}
 contract L2Token is ERC20{}
 
-contract ZUSE is ERC20, Withdrawable, Redeemable {
+contract ZUSE is ERC20 {
     using SafeMath for uint256;
 
     string     public name = "Zuse";
@@ -162,28 +154,13 @@ contract ZUSE is ERC20, Withdrawable, Redeemable {
     uint16      public ask = 10000; /* 10^5 tokens/wei gives ~$123 mil mkt cap using 1 ETH = $1000 */
     uint16      public bid = 9000; /* 0.9*10^5 tokens/wei gives ~$12.3 mil diff */
     address     public owner;
-    bool        public fellback = false;
 
-    constructor() public {
+    constructor() {
         totalSupply_ = 1230123012301230123012301230;
         balances[msg.sender] = totalSupply_;
         owner = msg.sender;
     }
 
-    // These functions concern obtaining & selling tokens
-    function withdraw(address payable to, uint256 quantity) public override returns (bool) {
-        require(msg.sender==owner);
-        to.transfer(quantity);
-    }
-
-    function sell(address payable to, uint256 quantity) public override returns (bool) {
-        balances[msg.sender].sub(quantity);
-        to.transfer(quantity);
-    }
-
-    function buy() public payable override returns (bool) {
-        balances[msg.sender] = balances[msg.sender].add(msg.value.mul(ask));
-    }
 
     function batchTransfer(address[] calldata accounts, uint256[] calldata amounts)
         external
@@ -197,10 +174,8 @@ contract ZUSE is ERC20, Withdrawable, Redeemable {
     }
     // NP solvers
     function askSolve() public view returns (bool) {
-        
         return true;
     }
-
 
     // Storage functions
     function provideStorage() public view returns (bool) {
@@ -216,17 +191,11 @@ contract ZUSE is ERC20, Withdrawable, Redeemable {
         return msg.sender;
     }
 
-    function getFellback() public view returns (bool) {
-        return fellback;
-    }
-
     receive() payable external {
-        fellback = true;
-        //revert();
+        revert();
     }
 
     fallback() payable external {
-        fellback = true;
-        //revert();
+        revert();
     }
 }
