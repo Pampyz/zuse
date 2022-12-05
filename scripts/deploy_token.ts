@@ -6,6 +6,11 @@ async function deploy(tag) {
   return zuse;
 }
 
+async function deploy_MM() {
+  const Factory = await ethers.getContractFactory('SimpleMM')
+  const MM = await Factory.deploy()
+  return MM
+}
 
 async function main() {
   const zuse = await deploy('ZUSE');
