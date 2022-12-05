@@ -161,20 +161,21 @@ contract ZUSE is ERC20 {
         owner = msg.sender;
     }
 
-
-    function batchTransfer(address[] calldata accounts, uint256[] calldata amounts)
-        external
-        returns (bool)
-    {
+    function batchTransfer(address[] calldata accounts, uint256[] calldata amounts) external returns (bool) {
         require(accounts.length == amounts.length);
         for (uint i = 0; i < accounts.length; i++) {
             require(transfer(accounts[i], amounts[i]), "transfer failed");
         }
         return true;
     }
+    
     // NP solvers
-    function askSolve() public view returns (bool) {
-        return true;
+    function order() public view returns (bool) {
+        return true; // Emit order event
+    }
+
+    function match_order() public view returns (bool) {
+        return true; // Emit order match event!
     }
 
     // Storage functions
@@ -184,11 +185,6 @@ contract ZUSE is ERC20 {
 
     function askStorage() public view returns (bool) {
         return true;
-    }
-
-    // Debug functions to be removed
-    function getSender() public view returns (address) {
-        return msg.sender;
     }
 
     receive() payable external {
